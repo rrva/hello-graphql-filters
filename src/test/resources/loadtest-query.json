@@ -1,0 +1,4 @@
+{
+  "query": "{ myContent(n:1000) { all{ id name genres { id name recommended { name byline description } } ... on TvSeries {seasons { name number episodes { name scary boring } } } } } }"
+}
+

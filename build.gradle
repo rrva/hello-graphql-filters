@@ -1,0 +1,134 @@
+buildscript {
+    ext.kotlin_version = '1.2.41'
+    ext.joobyVersion = '1.3.0'
+    ext.graphiqlVersion = '0.11.11'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'org.jooby', name: 'jooby-gradle-plugin', version: joobyVersion
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
+    }
+}
+
+plugins {
+    id "de.undercouch.download" version "3.2.0"
+    id 'com.jonaslasauskas.capsule' version "0.3.0"
+}
+
+import de.undercouch.gradle.tasks.download.Download
+
+group 'se.rrva'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'application'
+apply plugin: 'jooby'
+apply plugin: 'org.junit.platform.gradle.plugin'
+
+sourceCompatibility = 1.8
+mainClassName = "se.rrva.App"
+
+sourceSets.main.resources {
+    srcDirs = ["conf", "public"]
+}
+
+kotlin { experimental { coroutines 'enable' } }
+
+repositories {
+    mavenLocal()
+    maven { url 'http://dl.bintray.com/kotlin/kotlin-eap-1.2' }
+    mavenCentral()
+    jcenter()
+}
+
+capsule {
+    capsuleManifest {
+        applicationId = 'se.rrva.hello-graphql-filters'
+        applicationClass = 'se.rrva.App'
+    }
+}
+
+dependencies {
+
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.21.2'
+
+
+    compile "org.jooby:jooby-lang-kotlin:$joobyVersion"
+    compile group: "org.jooby", name: "jooby", version: joobyVersion
+    compile group: "org.jooby", name: "jooby-netty", version: joobyVersion
+    compile "org.jooby:jooby-assets:$joobyVersion"
+    compile "org.jooby:jooby-jackson:$joobyVersion"
+
+    compile 'com.graphql-java:java-dataloader:2.0.2'
+
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.3"
+
+    compile 'com.graphql-java:graphql-java:8.0'
+
+    compile group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '2.6.2'
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.mockito', name:'mockito-core', version: '2.+'
+    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
+
+    testCompile group: 'org.junit.platform', name: 'junit-platform-runner', version: '1.1.0'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+task copyGraphqlSchema(type: Copy) {
+    from 'conf'
+    into "public"
+    include 'schema.graphqls'
+    rename { file -> 'schema.graphqls.txt' }
+}
+
+
+task html(type: Copy) {
+    from 'src/templates'
+    into "public"
+    include 'graphiql.html.template'
+    rename { file -> 'graphiql.html' }
+    expand(es6promise: '4.0.5', fetch: '2.0.1', react: '15.4.2', graphiql: graphiqlVersion)
+}
+
+task downloadGraphiql(type: Download) {
+    src([
+            "https://github.com/graphql/graphiql/releases/download/v${graphiqlVersion}/graphiql.css",
+            "https://github.com/graphql/graphiql/releases/download/v${graphiqlVersion}/graphiql.js"
+    ])
+    dest "public"
+    overwrite false
+    onlyIfNewer true
+    quiet false
+}
+
+task copyExtra(type: Copy) {
+    from 'bin'
+    from 'config'
+
+    into "$buildDir/libs"
+}
+
+
+task repackage(type: Exec, dependsOn: copyExtra){
+    commandLine './gradlew', 'assemble'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.6'
+}
+
+
+processResources.dependsOn([downloadGraphiql, html, copyGraphqlSchema, copyExtra])

@@ -1,0 +1,62 @@
+type TvSeries implements Content {
+    id: ID!
+    name: String!
+    genres: [Genre!]!
+    seasons: [Season!]!
+}
+
+type Movie implements Content, PromotedContent {
+    id: ID!
+    name: String!
+    genres: [Genre!]!
+}
+
+interface Content {
+    id: ID!
+    name: String!
+    genres: [Genre!]!
+}
+
+type Season {
+    id: ID!
+    name: String!
+    number: Int!
+    episodes: [Episode!]!
+}
+
+type Episode implements PromotedContent {
+    id: ID!
+    tvSeries: TvSeries
+    name: String!
+    genres: [Genre!]!
+    scary: Boolean,
+    boring: Boolean
+}
+
+type Genre {
+    id: ID!
+    name: String!
+    content: [Content!]
+    recommended: [PromotedItem!]!
+}
+
+type PromotedItem {
+    name: String!
+    byline: String
+    description: String
+    content: PromotedContent
+}
+
+interface PromotedContent {
+    id: ID!
+    name: String!
+    genres: [Genre!]!
+}
+
+type Query {
+    myContent(n : Int, filter : String): MyContent!
+}
+
+type MyContent {
+    all: [Content!]!
+}
