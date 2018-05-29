@@ -1,6 +1,6 @@
 # hello-graphql-filters
 
-Generic filtering with graphl-java
+Generic filters for graphl-java, using a javascript-like expression language
 
 ## Build and package
 
@@ -18,18 +18,10 @@ This creates `build/distributions/hello-graphql-filters-1.0-SNAPSHOT.tar`
 
 ```
 {
-  myContent(filter: "name == 'Series 2'") {
+  myContent(filter: "name == 'Series 2' || id == 1") {
     all {
       id
       name
-      ... on TvSeries {
-        seasons {
-          episodes {
-            name
-            boring
-          }
-        }
-      }
     }
   }
 }
